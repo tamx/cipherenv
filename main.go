@@ -5,14 +5,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tamx/cipherenv"
+	cipherenv "cipherenv/utils"
 
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 func askCred() string {
 	print("Enter Password: ")
-	bytePassword, err := terminal.ReadPassword(0)
+	bytePassword, err := term.ReadPassword(0)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,9 +23,13 @@ func askCred() string {
 }
 
 func create(envFilename, orgFilename, secretKey string) {
-	plainData := os.ReadFile(orgFilename)
+	plainData, err := os.ReadFile(orgFilename)
+	if err != nil {
+		println(err.Error())
+		return
+	}
 	println("start: " + envFilename)
-	err := cipherenv.Create(envFilename, secretKey, plainData)
+	err = cipherenv.Create(envFilename, secretKey, plainData)
 	if err != nil {
 		println(err.Error())
 		return
