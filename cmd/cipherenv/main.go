@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	cipherenv "cipherenv"
+	"github.com/tamx/cipherenv"
 
 	"golang.org/x/term"
 )

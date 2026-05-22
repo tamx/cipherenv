@@ -1,4 +1,4 @@
-module cipherenv
+module github.com/tamx/cipherenv
 
 go 1.25.9
 
