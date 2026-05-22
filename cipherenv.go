@@ -85,10 +85,14 @@ func calKey(secretKey string) []byte {
 	return md5key[:]
 }
 
-var envCache map[string]string = map[string]string{}
+// Env は復号化された環境変数を保持する構造体です。
+type Env struct {
+	vars map[string]string
+}
 
-func parseEnv(envData []byte) error {
-	envCache = map[string]string{}
+// parseEnv はバイト列を解析してマップを返します。内部的なヘルパー関数です。
+func parseEnv(envData []byte) (map[string]string, error) {
+	vars := make(map[string]string)
 	for _, line := range strings.Split(string(envData), "\n") {
 		// println(line)
 		line = strings.TrimPrefix(line, "\a")
@@ -101,7 +105,7 @@ func parseEnv(envData []byte) error {
 		}
 		index := strings.Index(line, "=")
 		if index < 0 {
-			return errors.New("syntax error: " + line)
+			return nil, errors.New("syntax error: " + line)
 		}
 		key := strings.TrimSpace(line[:index])
 		// println(key)
@@ -109,37 +113,41 @@ func parseEnv(envData []byte) error {
 			continue
 		}
 		value := strings.TrimSpace(line[(index + 1):])
-		if value[0] == '"' && value[len(value)-1] == '"' {
+		// クォートの除去（空文字や1文字の場合のパニックを防止）
+		if len(value) >= 2 && value[0] == '"' && value[len(value)-1] == '"' {
 			value = value[1 : len(value)-1]
 		}
-		envCache[key] = value
+		vars[key] = value
 	}
-	return nil
+	return vars, nil
 }
 
-func LoadEnv(envFilename, secretKey string) error {
+// LoadEnv は暗号化されたファイルを読み込み、Env構造体のインスタンスを返します。
+func LoadEnv(envFilename, secretKey string) (*Env, error) {
 	password := calKey(secretKey)
 	envData, err := load(envFilename, password)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	err = parseEnv(envData)
+	vars, err := parseEnv(envData)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return &Env{vars: vars}, nil
 }
 
-func Keys() []string {
+// Keys は保持している全てのキーを返します。
+func (e *Env) Keys() []string {
 	keys := make([]string, 0)
-	for k := range envCache {
+	for k := range e.vars {
 		keys = append(keys, k)
 	}
 	return keys
 }
 
-func Get(key string) string {
-	return envCache[key]
+// Get は指定されたキーに対応する値を返します。
+func (e *Env) Get(key string) string {
+	return e.vars[key]
 }
 
 func Create(envFilename, secretKey string,
