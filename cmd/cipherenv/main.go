@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	cipherenv "cipherenv/utils"
+	cipherenv "cipherenv"
 
 	"golang.org/x/term"
 )
@@ -37,9 +37,12 @@ func create(envFilename, orgFilename, secretKey string) {
 }
 
 func read(envFilename, secretKey string) {
-	cipherenv.LoadEnv(envFilename, secretKey)
-	for _, key := range cipherenv.Keys() {
-		value := cipherenv.Get(key)
+	env, err := cipherenv.LoadEnv(envFilename, secretKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, key := range env.Keys() {
+		value := env.Get(key)
 		println(key + " = " + value)
 	}
 }
@@ -47,9 +50,12 @@ func read(envFilename, secretKey string) {
 func usage() {
 	envFilename := os.Getenv("ENV_FILE")
 	secretKey := "secret:" + os.Getenv("ENV_KEY")
-	cipherenv.LoadEnv(envFilename, secretKey)
-	for _, key := range cipherenv.Keys() {
-		value := cipherenv.Get(key)
+	env, err := cipherenv.LoadEnv(envFilename, secretKey)
+	if err != nil {
+		return
+	}
+	for _, key := range env.Keys() {
+		value := env.Get(key)
 		println(key + " = " + value)
 	}
 }
