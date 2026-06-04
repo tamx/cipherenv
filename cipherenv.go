@@ -136,6 +136,18 @@ func LoadEnv(envFilename, secretKey string) (*Env, error) {
 	return &Env{vars: vars}, nil
 }
 
+func LoadRaw(envFilename string) (*Env, error) {
+	plainData, err := os.ReadFile(envFilename)
+	if err != nil {
+		return nil, err
+	}
+	vars, err := parseEnv(plainData)
+	if err != nil {
+		return nil, err
+	}
+	return &Env{vars: vars}, nil
+}
+
 // Keys は保持している全てのキーを返します。
 func (e *Env) Keys() []string {
 	keys := make([]string, 0)
